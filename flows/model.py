@@ -16,5 +16,5 @@ class BasicFlow(nn.Module):
         eps = torch.randn(shape)  # unit gaussian
         z0 = self.mu + eps * std
 
-        zk, ldj = self.flow(z0)
-        return z0, zk, ldj, self.mu, self.log_var
+        zk = self.flow(z0)
+        return z0, zk, self.mu, self.log_var

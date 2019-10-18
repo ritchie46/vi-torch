@@ -3,6 +3,7 @@ import torch.distributions as dist
 import numpy as np
 import matplotlib.pyplot as plt
 from flows.model import BasicFlow
+from layers.utils import accumulate_kl_div, reset_kl_div
 
 
 def target_density(z):
@@ -32,11 +33,14 @@ def train_flow(flow, sample_shape, epochs=1000):
     optim = torch.optim.Adam(flow.parameters(), lr=1e-2)
 
     for i in range(epochs):
-        z0, zk, ldj, mu, log_var = flow(shape=sample_shape)
+        z0, zk, mu, log_var = flow(shape=sample_shape)
+        ldj = accumulate_kl_div(flow)
+
         loss = det_loss(mu=mu, log_var=log_var, z_0=z0, z_k=zk, ldj=ldj, beta=1)
         loss.backward()
         optim.step()
         optim.zero_grad()
+        reset_kl_div(flow)
         if i % 100 == 0:
             print(loss.item())
 
@@ -65,5 +69,5 @@ def run_example(flow_layer, n_flows=8):
     # batch, dim
     sample_shape = (50, 2)
     train_flow(flow, sample_shape, epochs=2500)
-    z0, zk, ldj, mu, log_var = flow((5000, 2))
+    z0, zk, mu, log_var = flow((5000, 2))
     show_samples(zk.data)

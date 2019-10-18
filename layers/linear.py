@@ -1,9 +1,10 @@
 import torch
 from torch import nn
 import torch.distributions as dist
+from layers.base import KL_Layer
 
 
-class LinearVariational(nn.Module):
+class LinearVariational(KL_Layer):
     """
     Mean field approximation of nn.Linear
     """
@@ -14,7 +15,6 @@ class LinearVariational(nn.Module):
         self.out_features = out_features
         self.include_bias = bias
         self.n_batches = n_batches
-        self._kl_divergence_ = 0
 
         # Initialize the variational parameters.
         # 𝑄(𝑤)=N(𝜇_𝜃,𝜎2_𝜃)

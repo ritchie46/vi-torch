@@ -1,8 +1,9 @@
 import torch
 from torch import nn
+from layers.base import KL_Layer
 
 
-class Planar(nn.Module):
+class Planar(KL_Layer):
     def __init__(self, size=1, init_sigma=0.01):
         super().__init__()
         self.u = nn.Parameter(torch.randn(1, size).normal_(0, init_sigma))
@@ -44,10 +45,6 @@ class Planar(nn.Module):
         return 1 - torch.tanh(z) ** 2
 
     def forward(self, z):
-        if isinstance(z, tuple):
-            z, accumulating_ldj = z
-        else:
-            z, accumulating_ldj = z, 0
         psi = self.psi(z)
 
         u = self.normalized_u
@@ -58,8 +55,10 @@ class Planar(nn.Module):
         # log |det Jac|
         ldj = torch.log(torch.abs(det) + 1e-6)
 
+        self._kl_divergence_ += ldj
+
         wzb = z @ self.w.t() + self.b
 
         fz = z + (u * self.h(wzb))
 
-        return fz, ldj + accumulating_ldj
+        return fz
