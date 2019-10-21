@@ -25,7 +25,7 @@ def test_masked_linear_mask():
         at 11:26
     """
     input_size = 4
-    l = layers.MaskedLinear(input_size, 5, input_size, bias=False)
+    l = layers.LinearMasked(input_size, 5, input_size, bias=False)
     # Example values taken from the first hidden layer.
     l.m = torch.tensor([1, 2, 1, 2, 3])
 

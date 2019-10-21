@@ -1,2 +1,2 @@
 from layers.linear import LinearVariational
-from layers.autoregressive import MaskedLinear
+from layers.autoregressive import LinearMasked

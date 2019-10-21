@@ -3,7 +3,7 @@ import torch
 import torch.nn.functional as F
 
 
-class MaskedLinear(nn.Module):
+class LinearMasked(nn.Module):
     """
     Masked Linear layers used in Made.
 
@@ -14,7 +14,7 @@ class MaskedLinear(nn.Module):
 
     """
     def __init__(self, in_features, out_features, num_features, bias=True):
-        super(MaskedLinear, self).__init__()
+        super(LinearMasked, self).__init__()
         self.linear = nn.Linear(in_features, out_features, bias)
         # m function of the paper. Every hidden node, gets a number between 1 and D-1
         self.m = torch.randint(1, num_features, size=(out_features,)).type(torch.int32)
