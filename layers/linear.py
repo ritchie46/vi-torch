@@ -10,6 +10,19 @@ class LinearVariational(KL_Layer):
     """
 
     def __init__(self, in_features, out_features, n_batches, bias=True):
+        """
+        Parameters
+        ----------
+        in_features : int
+        out_features : int
+        n_batches : int
+            Needed for KL-divergence re-scaling.
+            See Also:
+                Blundell, Cornebise, Kavukcioglu & Wierstra (2015, May 20)
+                Weight Uncertainty in Neural Networks.
+                Retrieved from https://arxiv.org/abs/1505.05424
+        bias
+        """
         super().__init__()
         self.in_features = in_features
         self.out_features = out_features
