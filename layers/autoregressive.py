@@ -13,11 +13,23 @@ class LinearMasked(nn.Module):
         Retrieved from https://arxiv.org/abs/1502.03509
 
     """
-    def __init__(self, in_features, out_features, num_features, bias=True):
+    def __init__(self, in_features, out_features, num_input_features, bias=True):
+        """
+
+        Parameters
+        ----------
+        in_features : int
+        out_features : int
+        num_input_features : int
+            Number of features of the models input X.
+            These are needed for all masked layers.
+        bias : bool
+        """
         super(LinearMasked, self).__init__()
         self.linear = nn.Linear(in_features, out_features, bias)
+        self.num_input_features = num_input_features
         # m function of the paper. Every hidden node, gets a number between 1 and D-1
-        self.m = torch.randint(1, num_features, size=(out_features,)).type(torch.int32)
+        self.m = torch.randint(1, num_input_features, size=(out_features,)).type(torch.int32)
         self.register_buffer(
             "mask", torch.ones_like(self.linear.weight).type(torch.uint8)
         )
@@ -44,4 +56,21 @@ class LinearMasked(nn.Module):
 
         return F.linear(x, self.linear.weight * self.mask + b)
 
+
+class SequentialMasked(nn.Sequential):
+    def __init__(self, *args):
+        super().__init__(*args)
+
+        input_set = False
+        for i in range(len(args)):
+            layer = self.__getitem__(i)
+            if not isinstance(layer, LinearMasked):
+                continue
+            if not input_set:
+                m_previous_layer = torch.arange(1, layer.num_input_features + 1)
+                m_previous_layer[-1] = 1e9
+                input_set = True
+
+            layer.set_mask(m_previous_layer)
+            m_previous_layer = layer.m
 

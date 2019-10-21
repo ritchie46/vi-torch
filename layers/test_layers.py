@@ -49,3 +49,18 @@ def test_masked_linear_mask():
             ]
         )
     )
+
+
+def test_sequential_masked():
+    from layers.autoregressive import SequentialMasked
+
+    num_in = 3
+    a = SequentialMasked(
+        layers.LinearMasked(num_in, 5, num_in),
+        nn.ReLU(),
+        layers.LinearMasked(5, 3, num_in)
+    )
+    # Test if the mask is set on all LinearMasked layers.
+    # At initializing they contain only 1's.
+    assert torch.any(a[0].mask == 0)
+    assert torch.any(a[-1].mask == 0)
