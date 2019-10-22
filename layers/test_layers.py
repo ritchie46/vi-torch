@@ -23,11 +23,16 @@ def test_masked_linear_mask():
     """
     See Also: https://www.youtube.com/watch?v=lNW8T0W-xeE
         at 11:26
+
+    See image:
+        img/made/made_tests.png
     """
+    from layers.autoregressive import set_mask_output_layer
     input_size = 4
-    l = layers.LinearMasked(input_size, 5, input_size, bias=False)
+    hidden_size = 5
+    input_layer = layers.LinearMasked(input_size, hidden_size, input_size, bias=False)
     # Example values taken from the first hidden layer.
-    l.m = torch.tensor([1, 2, 1, 2, 3])
+    input_layer.m = torch.tensor([1, 2, 1, 2, 3])
 
     m_input_layer = torch.arange(1, input_size + 1)
     # last values is conditional on the previous x-values
@@ -35,10 +40,10 @@ def test_masked_linear_mask():
     # Should not have any hidden nodes.
     m_input_layer[-1] = 1e9
 
-    l.set_mask(m_input_layer)
+    input_layer.set_mask(m_input_layer)
 
     assert torch.all(
-        l.mask
+        input_layer.mask
         == torch.tensor(
             [
                 [True, False, False, False],
@@ -50,10 +55,46 @@ def test_masked_linear_mask():
         )
     )
 
+    # Test the masks of predefined m values.
+    hidden_layer = layers.LinearMasked(hidden_size, hidden_size, input_size)
+    hidden_layer.m = torch.tensor([1, 1, 2, 1, 3])
+    hidden_layer.set_mask(input_layer.m)
+
+    assert torch.all(
+        hidden_layer.mask
+        == torch.tensor(
+            [
+                [True, False, True, False, False],
+                [True, False, True, False, False],
+                [True, True, True, True, False],
+                [True, False, True, False, False],
+                [True, True, True, True, True],
+            ]
+        )
+    )
+
+    output_layer = layers.LinearMasked(hidden_size, input_size, input_size)
+    output_layer = set_mask_output_layer(output_layer, hidden_layer.m)
+
+    assert torch.all(
+        output_layer.mask
+        == torch.tensor(
+            [
+                [False, False, False, False, False],
+                [True, True, False, True, False],
+                [True, True, True, True, False],
+                [True, True, True, True, True],
+            ]
+        )
+    )
+
 
 def test_sequential_masked():
     from layers.autoregressive import SequentialMasked
 
+    # Due to uniform sampling there can be paths, that dont have a connection.
+    # TODO: assert successful sampling!
+    torch.manual_seed(3)
     num_in = 3
     a = SequentialMasked(
         layers.LinearMasked(num_in, 5, num_in),
@@ -64,3 +105,5 @@ def test_sequential_masked():
     # At initializing they contain only 1's.
     assert torch.any(a[0].mask == 0)
     assert torch.any(a[-1].mask == 0)
+
+

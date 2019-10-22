@@ -13,6 +13,7 @@ class LinearMasked(nn.Module):
         Retrieved from https://arxiv.org/abs/1502.03509
 
     """
+
     def __init__(self, in_features, out_features, num_input_features, bias=True):
         """
 
@@ -29,7 +30,9 @@ class LinearMasked(nn.Module):
         self.linear = nn.Linear(in_features, out_features, bias)
         self.num_input_features = num_input_features
         # m function of the paper. Every hidden node, gets a number between 1 and D-1
-        self.m = torch.randint(1, num_input_features, size=(out_features,)).type(torch.int32)
+        self.m = torch.randint(1, num_input_features, size=(out_features,)).type(
+            torch.int32
+        )
         self.register_buffer(
             "mask", torch.ones_like(self.linear.weight).type(torch.uint8)
         )
@@ -54,7 +57,7 @@ class LinearMasked(nn.Module):
         else:
             b = self.linear.bias
 
-        return F.linear(x, self.linear.weight * self.mask + b)
+        return F.linear(x, self.linear.weight * self.mask)
 
 
 class SequentialMasked(nn.Sequential):
@@ -67,10 +70,33 @@ class SequentialMasked(nn.Sequential):
             if not isinstance(layer, LinearMasked):
                 continue
             if not input_set:
-                m_previous_layer = torch.arange(1, layer.num_input_features + 1)
-                m_previous_layer[-1] = 1e9
+                layer = set_mask_input_layer(layer)
+                m_previous_layer = layer.m
                 input_set = True
+            else:
+                layer.set_mask(m_previous_layer)
+                m_previous_layer = layer.m
 
-            layer.set_mask(m_previous_layer)
-            m_previous_layer = layer.m
+    def set_mask_last_layer(self):
+        reversed_layers = reversed(
+            filter(lambda l: isinstance(l, LinearMasked), self._modules.values())
+        )
+        # Get last masked layer
+        layer = next(reversed_layers)
+        prev_layer = next(reversed_layers)
+        set_mask_output_layer(layer, prev_layer.m)
 
+
+def set_mask_output_layer(layer, m_previous_layer):
+    # Output layer has different m-values.
+    # The connection is shifted one value to the right.
+    layer.m = torch.arange(0, layer.num_input_features)
+    layer.set_mask(m_previous_layer)
+    return layer
+
+
+def set_mask_input_layer(layer):
+    m_input_layer = torch.arange(1, layer.num_input_features + 1)
+    m_input_layer[-1] = 1e9
+    layer.set_mask(m_input_layer)
+    return layer
