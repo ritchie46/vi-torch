@@ -92,8 +92,6 @@ def test_masked_linear_mask():
 def test_sequential_masked():
     from layers.autoregressive import SequentialMasked
 
-    # Due to uniform sampling there can be paths, that dont have a connection.
-    # TODO: assert successful sampling!
     torch.manual_seed(3)
     num_in = 3
     a = SequentialMasked(
@@ -106,4 +104,27 @@ def test_sequential_masked():
     assert torch.any(a[0].mask == 0)
     assert torch.any(a[-1].mask == 0)
 
+
+def test_autoreggressive_made():
+    # Idea from karpathy; https://github.com/karpathy/pytorch-made/blob/master/made.py
+    # We predict x, and look at the partial derivatives.
+    # For the autoregressive property to hold, dy/dx
+    # can only be dependent of x<d. Where d is the current index.
+    from models import MADE
+
+    input_size = 10
+    x = torch.ones((1, input_size))
+    x.requires_grad = True
+
+    m = MADE(in_features=input_size, hidden_features=20)
+
+    for d in range(input_size):
+        x_hat = m(x)
+
+        # loss w.r.t. P(x_d | x_<d)
+        loss = x_hat[0, d]
+        loss.backward()
+
+        assert torch.all(x.grad[0, :d] != 0)
+        assert torch.all(x.grad[0, d:] == 0)
 
