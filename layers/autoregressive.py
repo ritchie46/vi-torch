@@ -30,6 +30,10 @@ class LinearMasked(nn.Module):
         self.linear = nn.Linear(in_features, out_features, bias)
         self.num_input_features = num_input_features
 
+        assert (
+            out_features >= num_input_features
+        ), "To ensure autoregression, the output there should be enough hidden nodes. h >= in."
+
         # Make sure that d-values are assigned to m
         # d = 1, 2, ... D-1
         d = set(range(1, num_input_features))
@@ -86,7 +90,9 @@ class SequentialMasked(nn.Sequential):
                 m_previous_layer = layer.m
 
     def set_mask_last_layer(self):
-        reversed_layers = filter(lambda l: isinstance(l, LinearMasked), reversed(self._modules.values()))
+        reversed_layers = filter(
+            lambda l: isinstance(l, LinearMasked), reversed(self._modules.values())
+        )
 
         # Get last masked layer
         layer = next(reversed_layers)
