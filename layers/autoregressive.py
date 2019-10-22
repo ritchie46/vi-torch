@@ -65,7 +65,7 @@ class LinearMasked(nn.Module):
         else:
             b = self.linear.bias
 
-        return F.linear(x, self.linear.weight * self.mask)
+        return F.linear(x, self.linear.weight * self.mask, b)
 
 
 class SequentialMasked(nn.Sequential):
