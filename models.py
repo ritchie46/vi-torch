@@ -1,6 +1,5 @@
 from torch import nn
 from layers.autoregressive import SequentialMasked, LinearMasked
-from layers.activation import Mish
 
 
 class MADE(nn.Module):
@@ -11,16 +10,16 @@ class MADE(nn.Module):
         Retrieved from https://arxiv.org/abs/1502.03509
     """
 
-    # Used Mish, so that neurons don't get nullified.
+    # Don't use ReLU, so that neurons don't get nullified.
     # This makes sure that the autoregressive test can verified
     def __init__(self, in_features, hidden_features):
 
         super().__init__()
         self.layers = SequentialMasked(
             LinearMasked(in_features, hidden_features, in_features),
-            Mish(),
+            nn.ELU(),
             LinearMasked(hidden_features, hidden_features, in_features),
-            Mish(),
+            nn.ELU(),
             LinearMasked(hidden_features, in_features, in_features),
             nn.Sigmoid(),
         )
