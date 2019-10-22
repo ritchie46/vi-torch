@@ -11,7 +11,7 @@ import math
 # Variational Inference with Normalizing Flows
 # https://github.com/weixsong/NormalizingFlow/blob/master/synthetic_data.py
 
-# All the functions needed to be transform by exp(-x) for some reason.
+# All the functions needed to be transform by exp(-x) to have the right probability density.
 
 
 def ta(z):
@@ -50,3 +50,9 @@ def u3(z):
     in1 = torch.exp(-0.5 * ((z[:, 1] - w1(z)) / 0.35) ** 2)
     in2 = torch.exp(-0.5 * ((z[:, 1] - w1(z) + w2(z)) / 0.35) ** 2)
     return torch.exp(torch.log(in1 + in2 + 1e-9))
+
+
+def u4(z):
+    in1 = torch.exp(-0.5 * ((z[:, 1] - w1(z)) / 0.4) ** 2)
+    in2 = torch.exp(-0.5 * ((z[:, 1] - w1(z) + w3(z)) / 0.35) ** 2)
+    return torch.exp(torch.log(in1 + in2))

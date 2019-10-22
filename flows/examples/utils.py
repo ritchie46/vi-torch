@@ -74,6 +74,8 @@ def run_example(
     def show_samples(s):
         plt.figure(figsize=(6, 6))
         plt.scatter(s[:, 0], s[:, 1], alpha=0.1)
+        plt.xlim(-7.5, 7.5)
+        plt.ylim(-7.5, 7.5)
         plt.show()
 
     flow = BasicFlow(dim=2, n_flows=n_flows, flow_layer=flow_layer)
