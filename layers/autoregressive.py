@@ -37,7 +37,11 @@ class LinearMasked(nn.Module):
         # Make sure that d-values are assigned to m
         # d = 1, 2, ... D-1
         d = set(range(1, num_input_features))
+        c = 0
         while True:
+            c += 1
+            if c > 10:
+                break
             # m function of the paper. Every hidden node, gets a number between 1 and D-1
             self.m = torch.randint(1, num_input_features, size=(out_features,)).type(
                 torch.int32
