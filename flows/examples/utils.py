@@ -26,8 +26,8 @@ def det_loss(mu, log_var, z_0, z_k, ldj, beta, target_function_name):
     return (log_qzk + nll) / batch_size
 
 
-def train_flow(flow, sample_shape, epochs=1000, target_function_name="ta"):
-    optim = torch.optim.Adam(flow.parameters(), lr=1e-2)
+def train_flow(flow, sample_shape, epochs=1000, target_function_name="ta", lr=1e-2):
+    optim = torch.optim.Adam(flow.parameters(), lr=lr)
 
     for i in range(epochs):
         z0, zk, mu, log_var = flow(shape=sample_shape)
@@ -51,7 +51,7 @@ def train_flow(flow, sample_shape, epochs=1000, target_function_name="ta"):
 
 
 def run_example(
-    flow_layer, n_flows=8, epochs=2500, samples=50, target_function_name="ta"
+    flow_layer, n_flows=8, epochs=2500, samples=50, target_function_name="ta", lr=1e-2
 ):
     x1 = np.linspace(-7.5, 7.5)
     x2 = np.linspace(-7.5, 7.5)
@@ -71,19 +71,32 @@ def run_example(
     )
     plt.show()
 
-    def show_samples(s):
-        plt.figure(figsize=(6, 6))
-        plt.scatter(s[:, 0], s[:, 1], alpha=0.1)
-        plt.xlim(-7.5, 7.5)
-        plt.ylim(-7.5, 7.5)
-        plt.show()
+    def show_samples(s0, sk):
+        alpha = 0.2
+
+        mask_1 = (z0.data[:, 0] > mu[0]) & (z0.data[:, 1] > mu[1])
+        mask_2 = (z0.data[:, 0] > mu[0]) & (z0.data[:, 1] < mu[1])
+        mask_3 = (z0.data[:, 0] < mu[0]) & (z0.data[:, 1] > mu[1])
+        mask_4 = (z0.data[:, 0] < mu[0]) & (z0.data[:, 1] < mu[1])
+
+        for s, title in zip([s0, sk], ["Base distribution $z_0$", "P(z|x) $z_k$"]):
+            plt.figure(figsize=(8, 8))
+            plt.title(title)
+            plt.scatter(s[:, 0][mask_1], s[:, 1][mask_1], color="C0", alpha=alpha)
+            plt.scatter(s[:, 0][mask_2], s[:, 1][mask_2], color="C1", alpha=alpha)
+            plt.scatter(s[:, 0][mask_3], s[:, 1][mask_3], color="C3", alpha=alpha)
+            plt.scatter(s[:, 0][mask_4], s[:, 1][mask_4], color="C4", alpha=alpha)
+
+            plt.xlim(-7.5, 7.5)
+            plt.ylim(-7.5, 7.5)
+            plt.show()
 
     flow = BasicFlow(dim=2, n_flows=n_flows, flow_layer=flow_layer)
 
     # batch, dim
     sample_shape = (samples, 2)
     train_flow(
-        flow, sample_shape, epochs=epochs, target_function_name=target_function_name
+        flow, sample_shape, epochs=epochs, target_function_name=target_function_name, lr=lr
     )
     z0, zk, mu, log_var = flow((5000, 2))
-    show_samples(zk.data)
+    show_samples(z0.data, zk.data)
