@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 import torch.nn.functional as F
-from layers.base import KL_Layer
+from layers.base import LayerKL
 from models import MADE
 
 
@@ -16,7 +16,7 @@ class AutoRegressiveNN(MADE):
         return self.layers(z) + self.context(h)
 
 
-class IAF(KL_Layer):
+class IAF(LayerKL):
     """
     Inverse Autoregressive Flow
     https://arxiv.org/pdf/1606.04934.pdf

@@ -1,15 +1,18 @@
 import torch
 from torch import nn
 import torch.distributions as dist
-from layers.base import KL_Layer
+from layers.base import LayerKL
+from custom_types import FloatTensor
 
 
-class LinearVariational(KL_Layer):
+class LinearVariational(LayerKL):
     """
     Mean field approximation of nn.Linear
     """
 
-    def __init__(self, in_features, out_features, n_batches, bias=True):
+    def __init__(
+        self, in_features: int, out_features: int, n_batches: int, bias: bool = True
+    ):
         """
         Parameters
         ----------
@@ -41,21 +44,27 @@ class LinearVariational(KL_Layer):
             torch.FloatTensor(in_features, out_features).normal_(mean=-2.5, std=0.001)
         )
         if self.include_bias:
-            self.b_mu = nn.Parameter(torch.zeros(out_features))
+            self.b_mu = nn.Parameter(torch.zeros(out_features), requires_grad=True)
             # proxy for variance
-            self.b_p = nn.Parameter(torch.zeros(out_features))
+            self.b_p = nn.Parameter(torch.zeros(out_features), requires_grad=True)
 
-    def reparameterize(self, mu, p):
+    def reparameterize(self, mu: FloatTensor, p: FloatTensor) -> FloatTensor:
         sigma = torch.log(1 + torch.exp(p))
         eps = torch.randn_like(sigma)
         return mu + (eps * sigma)
 
-    def kl_divergence(self, z, mu_theta, p_theta, prior_sd=1):
+    def kl_divergence(
+        self,
+        z: FloatTensor,
+        mu_theta: FloatTensor,
+        p_theta: FloatTensor,
+        prior_sd: float = 1.,
+    ) -> float:
         log_prior = dist.Normal(0, prior_sd).log_prob(z)
         log_p_q = dist.Normal(mu_theta, torch.log(1 + torch.exp(p_theta))).log_prob(z)
         return (log_p_q - log_prior).sum() / self.n_batches
 
-    def forward(self, x):
+    def forward(self, x: FloatTensor) -> FloatTensor:
         w = self.reparameterize(self.w_mu, self.w_p)
 
         if self.include_bias:

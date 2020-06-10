@@ -1,9 +1,9 @@
 import torch
 from torch import nn
-from layers.base import KL_Layer
+from layers.base import LayerKL
 
 
-class Planar(KL_Layer):
+class Planar(LayerKL):
     def __init__(self, size=1, init_sigma=0.01):
         super().__init__()
         self.u = nn.Parameter(torch.randn(1, size).normal_(0, init_sigma))

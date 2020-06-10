@@ -1,8 +1,10 @@
-import torch
 from torch import nn
 
 
-class KL_Layer(nn.Module):
+class LayerKL(nn.Module):
+    """
+    Used to aggregate KL loss.
+    """
     def __init__(self):
         super().__init__()
-        self._kl_divergence_ = 0
+        self._kl_divergence_: float = 0.
